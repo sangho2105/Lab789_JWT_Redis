@@ -1,0 +1,57 @@
+@model Lab789HRWebClient.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0">SYSTEM LOGIN</h4>
+                <small class="text-white-50">Sign in with AuthServer account (JWT)</small>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Login" method="post">
+                    <input type="hidden" asp-for="ReturnUrl" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label font-weight-bold">Email</label>
+                        <input asp-for="Email" class="form-control" placeholder="e.g. manager@gmail.com, sangho@gmail.com..." />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label font-weight-bold">Password</label>
+                        <input asp-for="Password" class="form-control" placeholder="Enter password..." />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label">Remember me</label>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">Sign In</button>
+                    </div>
+                </form>
+
+                <div class="mt-4 pt-3 border-top text-muted small">
+                    <strong>Sample accounts in system:</strong>
+                    <ul class="mb-0 mt-1 ps-3">
+                        <li><strong>Manager:</strong> <code>manager@gmail.com</code> / <code>Manager@123</code> (Approve requests)</li>
+                        <li><strong>Employee:</strong> <code>sangho@gmail.com</code> / <code>Employee@123</code> (Submit requests)</li>
+                        <li><strong>Admin:</strong> <code>admin@gmail.com</code> / <code>Admin@123</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

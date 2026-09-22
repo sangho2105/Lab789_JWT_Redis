@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab789 Architecture & Workflow Guide: JWT, Redis Cache & Department Transfer</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --secondary: #4cc9f0;
+            --accent: #f72585;
+            --bg-dark: #0f172a;
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --code-bg: #1e1e2e;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            line-height: 1.65;
+        }
+
+        /* Hero Header */
+        .hero-section {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 4.5rem 0 3.5rem;
+            border-bottom: 4px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(67, 97, 238, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .badge-system {
+            background: rgba(67, 97, 238, 0.2);
+            border: 1px solid rgba(67, 97, 238, 0.4);
+            color: #93c5fd;
+            padding: 0.4rem 0.85rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.82rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Navigation Pills */
+        .nav-guide {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1020;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-guide .nav-link {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.92rem;
+            padding: 0.85rem 1.25rem;
+            border-radius: 0;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-guide .nav-link:hover, .nav-guide .nav-link.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: transparent;
+        }
+
+        /* Cards & Containers */
+        .guide-card {
+            background: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 2.2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .guide-card:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+        }
+
+        .guide-card-title {
+            font-weight: 700;
+            font-size: 1.55rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.4rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .guide-card-title i {
+            color: var(--primary);
+        }
+
+        /* Code Blocks */
+        .code-container {
+            background: var(--code-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1.25rem 0;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+        }
+
+        .code-header {
+            background: #181825;
+            padding: 0.6rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #313244;
+        }
+
+        .code-title {
+            color: #cdd6f4;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .code-block {
+            padding: 1.25rem 1.4rem;
+            margin: 0;
+            color: #cdd6f4;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.88rem;
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+
+        .kw { color: #cba6f7; font-weight: 600; }     /* keyword */
+        .type { color: #89b4fa; }                    /* type */
+        .str { color: #a6e3a1; }                     /* string */
+        .comm { color: #6c7086; font-style: italic; }/* comment */
+        .fn { color: #f9e2af; }                      /* function */
+        .num { color: #fab387; }                     /* number */
+
+        /* Visual Diagrams */
+        .flow-step {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-left: 4px solid var(--primary);
+            border-radius: 10px;
+            padding: 1.1rem 1.3rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .flow-step:hover {
+            background: #f1f5f9;
+            transform: translateX(4px);
+        }
+
+        .flow-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            margin-right: 0.65rem;
+        }
+
+        .callout-box {
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            margin: 1.25rem 0;
+            border-left: 5px solid;
+        }
+
+        .callout-info {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+
+        .callout-warning {
+            background-color: #fffbeb;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+
+        .callout-success {
+            background-color: #f0fdf4;
+            border-color: #22c55e;
+            color: #166534;
+        }
+
+        /* Architecture Matrix Table */
+        .table-custom {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .table-custom th {
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 600;
+            padding: 0.85rem 1.1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table-custom td {
+            padding: 0.85rem 1.1rem;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .table-custom tr:last-child td {
+            border-bottom: none;
+        }
+
+        footer {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 2.5rem 0;
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero Header -->
+    <header class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex gap-2 mb-3 flex-wrap">
+                        <span class="badge-system"><i class="bi bi-shield-lock-fill me-1"></i> JWT Authentication</span>
+                        <span class="badge-system"><i class="bi bi-lightning-charge-fill me-1"></i> Redis Caching</span>
+                        <span class="badge-system"><i class="bi bi-arrow-left-right me-1"></i> Department Transfer</span>
+                        <span class="badge-system"><i class="bi bi-hdd-network me-1"></i> Distributed SSO</span>
+                    </div>
+                    <h1 class="display-5 fw-bold mb-3">System Architecture & Technical Workflow Guide</h1>
+                    <p class="lead text-light opacity-75 mb-0">
+                        Comprehensive documentation explaining the architecture, design principles, and end-to-end execution flows for JWT authentication, Redis caching (Cache-Aside pattern), and Department Transfer workflows across solution <code>Lab789</code>.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                    <div class="bg-dark bg-opacity-50 p-3 rounded-4 border border-secondary border-opacity-25 text-start">
+                        <h6 class="text-uppercase text-secondary fw-bold small mb-2"><i class="bi bi-cpu me-1"></i> Active Services</h6>
+                        <div class="small text-light"><strong>AuthServer:</strong> <code>http://localhost:5264</code></div>
+                        <div class="small text-light"><strong>HRWebClient:</strong> <code>http://localhost:5133</code></div>
+                        <div class="small text-light"><strong>HRWebAPI:</strong> <code>http://localhost:5146</code></div>
+                        <div class="small text-light"><strong>Redis Cache:</strong> <code>localhost:6379</code></div>
+                        <div class="small text-light"><strong>LocalDB:</strong> <code>(localdb)\PRAM</code></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="nav-guide">
+        <div class="container">
+            <div class="nav nav-pills">
+                <a class="nav-link active" href="#architecture">1. System Architecture</a>
+                <a class="nav-link" href="#jwt-auth">2. JWT & SSO Bridging</a>
+                <a class="nav-link" href="#redis-cache">3. Redis Caching Pattern</a>
+                <a class="nav-link" href="#department-transfer">4. Transfer Workflow</a>
+                <a class="nav-link" href="#testing-guide">5. Testing Playbook</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="container my-5">
+
+        <!-- SECTION 1: SYSTEM ARCHITECTURE -->
+        <section id="architecture" class="guide-card">
+            <h2 class="guide-card-title"><i class="bi bi-diagram-3-fill"></i> 1. High-Level Distributed Architecture</h2>
+            <p>
+                The solution <code>Lab789</code> implements a decoupled microservices-inspired architecture comprising Identity Providers, REST APIs, and multiple frontend web clients communicating over HTTP using a hybrid authentication scheme (Shared Cookie SSO for web clients and Stateless JWT Bearer Tokens for Web APIs).
+            </p>
+
+            <div class="table-responsive my-3">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Project Component</th>
+                            <th>Port / Protocol</th>
+                            <th>Primary Responsibility</th>
+                            <th>Storage / Dependency</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Lab789AuthServer</strong></td>
+                            <td><code>:5264</code> (HTTP)</td>
+                            <td>Central Identity Provider, ASP.NET Core Identity authentication, SSO Cookie issuance, and JWT generation endpoint.</td>
+                            <td>SQL Server <code>AuthDB</code> (<code>AspNetUsers</code>, <code>AspNetRoles</code>)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lab789HRWebClient</strong></td>
+                            <td><code>:5133</code> (HTTP)</td>
+                            <td>MVC frontend for HR operations (Employee directory, Transfer Request submission & Manager review).</td>
+                            <td>SSO Cookie (<code>.Lab789.Authentication</code>) + In-Memory Session</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lab789HRWebAPI</strong></td>
+                            <td><code>:5146</code> (HTTP)</td>
+                            <td>Protected REST API exposing employee entities and processing transfer requests with atomic EF transactions.</td>
+                            <td>SQL Server <code>HRDB</code> + Redis Cache (<code>:6379</code>)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lab789SalesWebClient</strong></td>
+                            <td><code>:5284</code> (HTTP)</td>
+                            <td>Sister MVC client participating in Single Sign-On via shared data protection keys (<code>ShareKeys</code>).</td>
+                            <td>Shared SSO Cookie</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Redis Cache</strong></td>
+                            <td><code>:6379</code> (TCP)</td>
+                            <td>High-speed distributed in-memory cache for employee query acceleration and cache invalidation.</td>
+                            <td>Key: <code>Lab789HR_employees_list</code> (TTL: 10 mins)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Architecture Diagram Box -->
+            <div class="p-4 bg-light rounded-4 border my-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-hdd-network-fill text-primary me-2"></i>Component Interaction Flow</h6>
+                <div class="row text-center g-3">
+                    <div class="col-md-3">
+                        <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
+                            <span class="badge bg-primary mb-2">Web Client (:5133)</span>
+                            <div class="small text-muted">User interacts with MVC views. Holds SSO Cookie & caches JWT Token in Session.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-arrow-right fs-4 text-muted d-none d-md-block"></i>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
+                            <span class="badge bg-success mb-2">Auth Server (:5264)</span>
+                            <div class="small text-muted">Verifies Identity credentials. Issues signed JWT Bearer Token with Email & Roles.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-arrow-right fs-4 text-muted d-none d-md-block"></i>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-white border rounded-3 shadow-sm h-100">
+                            <span class="badge bg-dark mb-2">HR Web API (:5146)</span>
+                            <div class="small text-muted">Validates JWT Bearer. Queries Redis Cache or executes transactional writes to <code>HRDB</code>.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: JWT AUTHENTICATION & SSO BRIDGING -->
+        <section id="jwt-auth" class="guide-card">
+            <h2 class="guide-card-title"><i class="bi bi-shield-lock-fill"></i> 2. JWT Authentication & SSO Bridging Pattern</h2>
+            <p>
+                In a modern microservices or decoupled environment, web clients use cookie authentication for secure browser session handling, while APIs require stateless JWT (JSON Web Tokens) Bearer authentication for cross-service authorization.
+            </p>
+
+            <h5 class="fw-bold mt-4">2.1 JWT Generation in <code>Lab789AuthServer</code></h5>
+            <p>
+                When an employee logs in or when the client requests a token via email, the AuthServer encodes user identity, unique identifier (<code>sub</code>), email, and security roles into standard claims signed using <code>HmacSha256</code>:
+            </p>
+
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-title"><i class="bi bi-file-earmark-code"></i> Lab789AuthServer/Controllers/AuthController.cs</span>
+                    <span class="badge bg-secondary">C# (.NET 10)</span>
+                </div>
+                <pre class="code-block"><code>[<span class="type">HttpGet</span>(<span class="str">"token-by-email"</span>)]
+<span class="kw">public async</span> <span class="type">Task</span>&lt;<span class="type">IActionResult</span>&gt; <span class="fn">GetTokenByEmail</span>([<span class="type">FromQuery</span>] <span class="type">string</span> email)
+{
+    <span class="kw">var</span> user = <span class="kw">await</span> _userManager.<span class="fn">FindByEmailAsync</span>(email);
+    <span class="kw">if</span> (user == <span class="kw">null</span>) <span class="kw">return</span> <span class="fn">NotFound</span>(<span class="kw">new</span> { message = <span class="str">"User not found"</span> });
+
+    <span class="kw">var</span> roles = <span class="kw">await</span> _userManager.<span class="fn">GetRolesAsync</span>(user);
+    <span class="kw">var</span> claims = <span class="kw">new</span> <span class="type">List</span>&lt;<span class="type">Claim</span>&gt;
+    {
+        <span class="kw">new</span> <span class="type">Claim</span>(<span class="type">ClaimTypes</span>.NameIdentifier, user.Id),
+        <span class="kw">new</span> <span class="type">Claim</span>(<span class="type">ClaimTypes</span>.Name, user.UserName ?? user.Email!),
+        <span class="kw">new</span> <span class="type">Claim</span>(<span class="type">ClaimTypes</span>.Email, user.Email!)
+    };
+    <span class="kw">foreach</span> (<span class="kw">var</span> role <span class="kw">in</span> roles)
+    {
+        claims.<span class="fn">Add</span>(<span class="kw">new</span> <span class="type">Claim</span>(<span class="type">ClaimTypes</span>.Role, role));
+    }
+
+    <span class="kw">var</span> key = <span class="kw">new</span> <span class="type">SymmetricSecurityKey</span>(<span class="type">Encoding</span>.UTF8.<span class="fn">GetBytes</span>(_config[<span class="str">"Jwt:Key"</span>]!));
+    <span class="kw">var</span> creds = <span class="kw">new</span> <span class="type">SigningCredentials</span>(key, <span class="type">SecurityAlgorithms</span>.HmacSha256);
+    <span class="kw">var</span> expires = <span class="type">DateTime</span>.UtcNow.<span class="fn">AddMinutes</span>(<span class="num">1440</span>); <span class="comm">// 24 Hours TTL</span>
+
+    <span class="kw">var</span> token = <span class="kw">new</span> <span class="type">JwtSecurityToken</span>(
+        issuer: _config[<span class="str">"Jwt:Issuer"</span>],
+        audience: _config[<span class="str">"Jwt:Audience"</span>],
+        claims: claims,
+        expires: expires,
+        signingCredentials: creds
+    );
+
+    <span class="kw">return</span> <span class="fn">Ok</span>(<span class="kw">new</span> { token = <span class="kw">new</span> <span class="type">JwtSecurityTokenHandler</span>().<span class="fn">WriteToken</span>(token) });
+}</code></pre>
+            </div>
+
+            <h5 class="fw-bold mt-4">2.2 Preventing Stale Session Token Cross-Contamination</h5>
+            <div class="callout-box callout-warning">
+                <strong><i class="bi bi-exclamation-triangle-fill me-1"></i> Root Cause of the Account Mismatch Bug:</strong>
+                When an administrator or manager switches to an employee account via SSO, the browser's SSO Cookie updates to the new identity, but the ASP.NET Core session cache on the client port (<code>:5133</code>) retained the previous manager's JWT token. Sending the manager's JWT to create an employee transfer request caused a <code>404: Employee information not found</code> error because manager accounts exist only in <code>AspNetUsers</code>, not in <code>Employees</code>.
+            </div>
+
+            <p>
+                <strong>The Solution:</strong> We implement user-bound token synchronization (<code>JWT_TOKEN_USER</code>). Whenever a request is made, the client checks if the session token's owner matches <code>User.Identity.Name</code>. If a mismatch is detected, the stale token is purged, and a fresh JWT is fetched:
+            </p>
+
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-title"><i class="bi bi-file-earmark-code"></i> Lab789HRWebClient/Controllers/TransferRequestsController.cs</span>
+                    <span class="badge bg-secondary">C# (.NET 10)</span>
+                </div>
+                <pre class="code-block"><code><span class="kw">private async</span> <span class="type">Task</span>&lt;<span class="type">HttpClient</span>&gt; <span class="fn">CreateAuthorizedClientAsync</span>()
+{
+    <span class="kw">var</span> client = _httpClientFactory.<span class="fn">CreateClient</span>();
+    <span class="kw">var</span> currentUserEmail = User.<span class="fn">FindFirst</span>(<span class="type">ClaimTypes</span>.Email)?.Value 
+                           ?? User.<span class="fn">FindFirst</span>(<span class="type">ClaimTypes</span>.Name)?.Value 
+                           ?? User.Identity?.Name;
+
+    <span class="type">string</span>? token = <span class="kw">null</span>;
+
+    <span class="kw">if</span> (!<span class="type">string</span>.<span class="fn">IsNullOrEmpty</span>(currentUserEmail))
+    {
+        <span class="comm">// Verify if the cached session token belongs to the currently logged in SSO user</span>
+        <span class="kw">var</span> sessionUser = HttpContext.Session.<span class="fn">GetString</span>(<span class="str">"JWT_TOKEN_USER"</span>);
+        <span class="kw">if</span> (<span class="type">string</span>.<span class="fn">Equals</span>(sessionUser, currentUserEmail, <span class="type">StringComparison</span>.OrdinalIgnoreCase))
+        {
+            token = HttpContext.Session.<span class="fn">GetString</span>(<span class="str">"JWT_TOKEN"</span>);
+        }
+        <span class="kw">else</span>
+        {
+            <span class="comm">// User changed in SSO! Evict stale token</span>
+            HttpContext.Session.<span class="fn">Remove</span>(<span class="str">"JWT_TOKEN"</span>);
+            HttpContext.Session.<span class="fn">Remove</span>(<span class="str">"JWT_TOKEN_USER"</span>);
+        }
+
+        <span class="kw">if</span> (<span class="type">string</span>.<span class="fn">IsNullOrEmpty</span>(token) && User.Identity?.IsAuthenticated == <span class="kw">true</span>)
+        {
+            <span class="comm">// Fetch fresh JWT for current identity</span>
+            <span class="kw">var</span> authClient = _httpClientFactory.<span class="fn">CreateClient</span>();
+            <span class="kw">var</span> tokenResp = <span class="kw">await</span> authClient.<span class="fn">GetAsync</span>(<span class="str">$"</span>{_authServerUrl}<span class="str">/api/Auth/token-by-email?email=</span>{Uri.<span class="fn">EscapeDataString</span>(currentUserEmail)}<span class="str">"</span>);
+            <span class="kw">if</span> (tokenResp.IsSuccessStatusCode)
+            {
+                <span class="kw">var</span> json = <span class="kw">await</span> tokenResp.Content.<span class="fn">ReadAsStringAsync</span>();
+                <span class="kw">using var</span> doc = <span class="type">JsonDocument</span>.<span class="fn">Parse</span>(json);
+                <span class="kw">if</span> (doc.RootElement.<span class="fn">TryGetProperty</span>(<span class="str">"token"</span>, <span class="kw">out var</span> tokenEl))
+                {
+                    token = tokenEl.<span class="fn">GetString</span>();
+                    HttpContext.Session.<span class="fn">SetString</span>(<span class="str">"JWT_TOKEN"</span>, token!);
+                    HttpContext.Session.<span class="fn">SetString</span>(<span class="str">"JWT_TOKEN_USER"</span>, currentUserEmail);
+                }
+            }
+        }
+    }
+
+    <span class="kw">if</span> (!<span class="type">string</span>.<span class="fn">IsNullOrEmpty</span>(token))
+    {
+        client.DefaultRequestHeaders.Authorization = <span class="kw">new</span> <span class="type">AuthenticationHeaderValue</span>(<span class="str">"Bearer"</span>, token);
+    }
+    <span class="kw">return</span> client;
+}</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 3: REDIS DISTRIBUTED CACHING -->
+        <section id="redis-cache" class="guide-card">
+            <h2 class="guide-card-title"><i class="bi bi-lightning-charge-fill"></i> 3. Redis Distributed Caching Architecture</h2>
+            <p>
+                To minimize database I/O and optimize throughput for frequent employee lookups, <code>Lab789HRWebAPI</code> leverages the <strong>Cache-Aside (Lazy-Loading)</strong> pattern integrated with proactive cache invalidation upon any data mutation.
+            </p>
+
+            <div class="row g-4 my-2">
+                <div class="col-md-6">
+                    <div class="flow-step h-100">
+                        <div class="fw-bold text-primary mb-2"><span class="flow-number">A</span> Cache-Aside Read Flow</div>
+                        <ol class="small text-muted ps-3 mb-0">
+                            <li>Client sends <code>GET /api/Employees</code> with JWT Bearer Token.</li>
+                            <li>Controller queries Redis key: <code>Lab789HR_employees_list</code>.</li>
+                            <li><strong>Cache Hit:</strong> Data returned instantly from memory in &lt; 2ms.</li>
+                            <li><strong>Cache Miss:</strong> SQL Server queried, result stored in Redis with 10-minute TTL, then returned to caller.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="flow-step h-100">
+                        <div class="fw-bold text-success mb-2"><span class="flow-number">B</span> Cache Invalidation (Eviction)</div>
+                        <ol class="small text-muted ps-3 mb-0">
+                            <li>New employee created (<code>POST /api/Employees</code>) OR transfer request approved (<code>PUT /api/TransferRequests/{id}/review</code>).</li>
+                            <li>Database records updated within transaction.</li>
+                            <li>Controller immediately invokes <code>_cache.RemoveAsync("employees_list")</code>.</li>
+                            <li>Subsequent read hits database and repopulates fresh cache automatically.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="fw-bold mt-4">3.1 Cache-Aside Implementation in Controller</h5>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-title"><i class="bi bi-file-earmark-code"></i> Lab789HRWebAPI/Controllers/EmployeesController.cs</span>
+                    <span class="badge bg-secondary">C# (.NET 10)</span>
+                </div>
+                <pre class="code-block"><code><span class="kw">private const string</span> EmployeesCacheKey = <span class="str">"employees_list"</span>;
+
+[<span class="type">HttpGet</span>]
+<span class="kw">public async</span> <span class="type">Task</span>&lt;<span class="type">ActionResult</span>&lt;<span class="type">IEnumerable</span>&lt;<span class="type">Employee</span>&gt;&gt;&gt; <span class="fn">GetAll</span>()
+{
+    <span class="comm">// 1. Check Redis Cache</span>
+    <span class="kw">var</span> cachedData = <span class="kw">await</span> _cache.<span class="fn">GetStringAsync</span>(EmployeesCacheKey);
+    <span class="kw">if</span> (!<span class="type">string</span>.<span class="fn">IsNullOrEmpty</span>(cachedData))
+    {
+        <span class="kw">var</span> cachedEmployees = <span class="type">JsonSerializer</span>.<span class="fn">Deserialize</span>&lt;<span class="type">List</span>&lt;<span class="type">Employee</span>&gt;&gt;(cachedData);
+        <span class="kw">return</span> <span class="fn">Ok</span>(cachedEmployees);
+    }
+
+    <span class="comm">// 2. Cache Miss: Query Database</span>
+    <span class="kw">var</span> response = <span class="kw">await</span> context.Employees.<span class="fn">AsNoTracking</span>()
+                                          .<span class="fn">OrderByDescending</span>(e =&gt; e.Salary)
+                                          .<span class="fn">ToListAsync</span>();
+
+    <span class="comm">// 3. Store in Redis with a 10-Minute Sliding / Absolute TTL</span>
+    <span class="kw">var</span> options = <span class="kw">new</span> <span class="type">DistributedCacheEntryOptions</span>
+    {
+        AbsoluteExpirationRelativeToNow = <span class="type">TimeSpan</span>.<span class="fn">FromMinutes</span>(<span class="num">10</span>)
+    };
+    <span class="kw">await</span> _cache.<span class="fn">SetStringAsync</span>(EmployeesCacheKey, <span class="type">JsonSerializer</span>.<span class="fn">Serialize</span>(response), options);
+
+    <span class="kw">return</span> <span class="fn">Ok</span>(response);
+}</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 4: DEPARTMENT & POSITION TRANSFER WORKFLOW -->
+        <section id="department-transfer" class="guide-card">
+            <h2 class="guide-card-title"><i class="bi bi-arrow-left-right"></i> 4. Department & Position Transfer Workflow</h2>
+            <p>
+                The department transfer module allows employees to submit formal transfer requests to target departments and specific positions. Managers review, approve, or reject these requests with atomic database updates and instant cache synchronization.
+            </p>
+
+            <div class="flow-step">
+                <span class="flow-number">1</span> <strong>Dynamic Form Pre-Loading:</strong>
+                When an employee navigates to <code>/TransferRequests/Create</code>, the system queries their current profile via <code>GET /api/Employees/by-email/{email}</code>. It displays a summary card showing their full name, email, current department, and current position.
+            </div>
+
+            <div class="flow-step">
+                <span class="flow-number">2</span> <strong>Interactive Position Mapping (JavaScript):</strong>
+                When the employee picks a target department, client-side JavaScript dynamically populates the position dropdown with valid titles specific to that department (e.g., IT &rarr; DevOps Engineer, Senior Developer; Marketing &rarr; SEO Specialist, Content Creator).
+            </div>
+
+            <div class="flow-step">
+                <span class="flow-number">3</span> <strong>Atomic Database Transaction & Cache Invalidation:</strong>
+                When a Manager approves a request on <code>/TransferRequests/Pending</code>, the API executes an Entity Framework database transaction. It updates the request status to <code>APPROVED</code>, updates the employee's <code>Department</code> and <code>Position</code> in the <code>Employees</code> table, commits the transaction, and evicts the Redis cache.
+            </div>
+
+            <h5 class="fw-bold mt-4">4.1 Transactional Approval & Atomic State Mutation</h5>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-title"><i class="bi bi-file-earmark-code"></i> Lab789HRWebAPI/Controllers/TransferRequestsController.cs</span>
+                    <span class="badge bg-secondary">C# (.NET 10)</span>
+                </div>
+                <pre class="code-block"><code>[<span class="type">HttpPut</span>(<span class="str">"{id}/review"</span>)]
+[<span class="type">Authorize</span>(Roles = <span class="str">"Manager,Admin"</span>)]
+<span class="kw">public async</span> <span class="type">Task</span>&lt;<span class="type">IActionResult</span>&gt; <span class="fn">ReviewRequest</span>(<span class="type">int</span> id, [<span class="type">FromBody</span>] <span class="type">ReviewTransferRequestDto</span> dto)
+{
+    <span class="kw">var</span> reviewerEmail = User.<span class="fn">FindFirstValue</span>(<span class="type">ClaimTypes</span>.Email) ?? User.<span class="fn">FindFirstValue</span>(<span class="type">ClaimTypes</span>.Name);
+
+    <span class="comm">// Use an explicit transaction to ensure both request status and employee profile mutate atomically</span>
+    <span class="kw">using var</span> transaction = <span class="kw">await</span> _context.Database.<span class="fn">BeginTransactionAsync</span>();
+    <span class="kw">try</span>
+    {
+        <span class="kw">var</span> request = <span class="kw">await</span> _context.DepartmentTransferRequests.<span class="fn">FindAsync</span>(id);
+        <span class="kw">if</span> (request == <span class="kw">null</span>) <span class="kw">return</span> <span class="fn">NotFound</span>(<span class="kw">new</span> { message = <span class="str">"Transfer request not found"</span> });
+        <span class="kw">if</span> (request.Status != <span class="str">"PENDING"</span>) <span class="kw">return</span> <span class="fn">BadRequest</span>(<span class="kw">new</span> { message = <span class="str">"This request has already been processed"</span> });
+
+        request.ReviewerEmail = reviewerEmail;
+        request.ReviewNote = dto.ReviewNote;
+        request.ReviewedAt = <span class="type">DateTime</span>.UtcNow;
+
+        <span class="kw">if</span> (dto.IsApproved)
+        {
+            request.Status = <span class="str">"APPROVED"</span>;
+
+            <span class="comm">// Mutate Department and Position on the Employee entity</span>
+            <span class="kw">var</span> employee = <span class="kw">await</span> _context.Employees.<span class="fn">FindAsync</span>(request.EmployeeId);
+            <span class="kw">if</span> (employee != <span class="kw">null</span>)
+            {
+                employee.Department = request.ToDepartment;
+                employee.Position = !<span class="type">string</span>.<span class="fn">IsNullOrEmpty</span>(dto.ApprovedPosition)
+                    ? dto.ApprovedPosition.Trim()
+                    : request.ToPosition.Trim();
+
+                _context.Employees.<span class="fn">Update</span>(employee);
+            }
+        }
+        <span class="kw">else</span>
+        {
+            request.Status = <span class="str">"REJECTED"</span>;
+        }
+
+        <span class="kw">await</span> _context.<span class="fn">SaveChangesAsync</span>();
+        <span class="kw">await</span> transaction.<span class="fn">CommitAsync</span>();
+
+        <span class="comm">// Evict Redis cache upon approval so all clients immediately see updated department and position</span>
+        <span class="kw">if</span> (dto.IsApproved)
+        {
+            <span class="kw">await</span> _cache.<span class="fn">RemoveAsync</span>(EmployeesCacheKey);
+        }
+
+        <span class="kw">return</span> <span class="fn">Ok</span>(<span class="kw">new</span> { message = dto.IsApproved ? <span class="str">"Department transfer approved successfully"</span> : <span class="str">"Transfer request rejected"</span>, request });
+    }
+    <span class="kw">catch</span> (<span class="type">Exception</span> ex)
+    {
+        <span class="kw">await</span> transaction.<span class="fn">RollbackAsync</span>();
+        <span class="kw">return</span> <span class="fn">StatusCode</span>(<span class="num">500</span>, <span class="kw">new</span> { message = <span class="str">"Error processing transfer request"</span>, error = ex.Message });
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 5: TESTING PLAYBOOK -->
+        <section id="testing-guide" class="guide-card">
+            <h2 class="guide-card-title"><i class="bi bi-check2-circle"></i> 5. Testing & Verification Playbook</h2>
+            <p>
+                Follow this comprehensive verification guide to test Single Sign-On, JWT issuance, Redis cache behavior, and the end-to-end Department Transfer workflow.
+            </p>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="card h-100 border-primary border-opacity-25 shadow-sm">
+                        <div class="card-header bg-primary text-white fw-bold">Step 1: Submit Transfer Request</div>
+                        <div class="card-body small">
+                            <ol class="ps-3 mb-0">
+                                <li>Navigate to <code>http://localhost:5133/Account/Login</code>.</li>
+                                <li>Sign in as <strong>Employee</strong>:
+                                    <br><code>sangho@gmail.com</code> / <code>Employee@123</code>
+                                </li>
+                                <li>Click <strong>Submit Request</strong> in navigation.</li>
+                                <li>Choose <strong>Target Department</strong> (e.g. <code>IT</code>) and <strong>Target Position</strong> (e.g. <code>DevOps Engineer</code>).</li>
+                                <li>Enter reason and submit. Status will show as <code>PENDING</code> in <strong>My Transfer Requests</strong>.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-warning border-opacity-50 shadow-sm">
+                        <div class="card-header bg-warning text-dark fw-bold">Step 2: Manager Review & Approval</div>
+                        <div class="card-body small">
+                            <ol class="ps-3 mb-0">
+                                <li>Click <strong>Logout</strong> to clear session.</li>
+                                <li>Sign in as <strong>Manager</strong>:
+                                    <br><code>manager@gmail.com</code> / <code>Manager@123</code>
+                                </li>
+                                <li>Click <strong>★ Pending Approvals</strong> in navigation.</li>
+                                <li>Click <strong>Approve</strong> on Sang Ho's request.</li>
+                                <li>Verify or modify designated position and confirm approval.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-success border-opacity-50 shadow-sm">
+                        <div class="card-header bg-success text-white fw-bold">Step 3: Verify Cache & DB</div>
+                        <div class="card-body small">
+                            <ol class="ps-3 mb-0">
+                                <li>Go to <strong>Employees</strong> directory on <code>http://localhost:5133</code>.</li>
+                                <li>Observe that Sang Ho's department is now <strong>IT</strong> and position is <strong>DevOps Engineer</strong>.</li>
+                                <li>Open terminal and run Redis CLI:
+                                    <br><code>redis-cli KEYS "Lab789HR_*"</code>
+                                </li>
+                                <li>Verify the cache key was refreshed with the updated department data!</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center">
+        <div class="container">
+            <h6 class="fw-bold text-white mb-2">Lab789 Technical Architecture & Workflow Reference</h6>
+            <p class="small text-muted mb-0">Built for Advanced System Integration (JWT Bearer Auth • Redis Distributed Caching • Entity Framework Core Transactions • ASP.NET Core SSO)</p>
+        </div>
+    </footer>
+
+</body>
+</html>

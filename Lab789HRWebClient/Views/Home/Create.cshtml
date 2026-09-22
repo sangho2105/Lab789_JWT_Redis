@@ -1,39 +1,124 @@
-﻿@model Lab789HRWebClient.Models.EmployeeViewModel
+@model Lab789HRWebClient.Models.EmployeeViewModel
 
-<h2>Create new Employee</h2>
-<form asp-action="Create" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+@{
+    ViewData["Title"] = "Add New Employee";
+}
 
-    <div class="mb-3">
-        <label asp-for="FullName">Full Name</label>
-        <input asp-for="FullName" class="form-control"/>
-        <span asp-validation-for="FullName" class="text-danger"></span>
+<div class="row justify-content-center mt-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0">Add New Employee</h4>
+                <small class="text-white-50">Create employee profile (HRDB) and login account (AuthServer)</small>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label font-weight-bold">Full Name</label>
+                        <input asp-for="FullName" class="form-control" placeholder="e.g. John Doe..." />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label font-weight-bold">Email</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="johndoe@example.com" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Department" class="form-label font-weight-bold">Department</label>
+                        <select asp-for="Department" class="form-select" id="createDeptSelect" onchange="onCreateDeptChange()">
+                            <option value="">-- Select Department --</option>
+                            <option value="IT">IT (Information Technology)</option>
+                            <option value="Marketing">Marketing (Media & Advertising)</option>
+                            <option value="HR">HR (Human Resources)</option>
+                            <option value="Sales">Sales (Business Development)</option>
+                            <option value="Finance">Finance (Finance & Accounting)</option>
+                            <option value="Operations">Operations (Operations & Logistics)</option>
+                        </select>
+                        <span asp-validation-for="Department" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Position" class="form-label font-weight-bold">Position</label>
+                        <select asp-for="Position" class="form-select" id="createPosSelect">
+                            <option value="">-- Please select department first --</option>
+                        </select>
+                        <span asp-validation-for="Position" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Salary" class="form-label font-weight-bold">Salary ($)</label>
+                        <input asp-for="Salary" type="number" class="form-control" placeholder="1500" />
+                        <span asp-validation-for="Salary" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label font-weight-bold">Initial Password (For Login)</label>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="Minimum 6 characters..." />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                        <div class="form-text">System will create a login account (Role: Employee) with this password.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+                        <button type="submit" class="btn btn-success px-4">Save Employee</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+</div>
 
-    <div class="mb-3">
-        <label asp-for="Email">Email</label>
-        <input asp-for="Email" type="email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const deptPositions = {
+            "IT": ["Developer", "Senior Developer", "Tester (QA/QC)", "DevOps Engineer", "System Admin", "Tech Lead", "Data Analyst"],
+            "Marketing": ["Content Creator", "Digital Marketing Specialist", "SEO Specialist", "Brand Executive", "Graphic Designer"],
+            "HR": ["HR Specialist", "Recruiter", "C&B Specialist", "HR Admin", "Training Specialist"],
+            "Sales": ["Sales Executive", "Account Manager", "Business Development", "Sales Admin", "Consultant"],
+            "Finance": ["Accountant", "Financial Analyst", "Chief Accountant", "Auditor"],
+            "Operations": ["Operations Specialist", "Project Coordinator", "Team Leader", "Operations Assistant"]
+        };
 
-    <div class="mb-3">
-        <label asp-for="Department">Department</label>
-        <input asp-for="Department" class="form-control" />
-        <span asp-validation-for="Department" class="text-danger"></span>
-    </div>
+        function onCreateDeptChange() {
+            const dept = document.getElementById("createDeptSelect").value;
+            const posSelect = document.getElementById("createPosSelect");
 
-    <div class="mb-3">
-        <label asp-for="Position">Position</label>
-        <input asp-for="Position" class="form-control" />
-        <span asp-validation-for="Position" class="text-danger"></span>
-    </div>
+            posSelect.innerHTML = "";
+            if (!dept || !deptPositions[dept]) {
+                const opt = document.createElement("option");
+                opt.value = "";
+                opt.text = "-- Please select department first --";
+                posSelect.appendChild(opt);
+                return;
+            }
 
-    <div class="mb-3">
-        <label asp-for="Salary">Salary</label>
-        <input asp-for="Salary" type="number" class="form-control" />
-        <span asp-validation-for="Salary" class="text-danger"></span>
-    </div>
-    <br />
-    <button type="submit" class="btn btn-success">Save</button>
-    <a asp-action="Index" class="btn btn-secondary">Back</a>
-</form>
+            const defaultOpt = document.createElement("option");
+            defaultOpt.value = "";
+            defaultOpt.text = `-- Select position in ${dept} --`;
+            posSelect.appendChild(defaultOpt);
+
+            deptPositions[dept].forEach(p => {
+                const opt = document.createElement("option");
+                opt.value = p;
+                opt.text = p;
+                posSelect.appendChild(opt);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const dept = document.getElementById("createDeptSelect").value;
+            if (dept) {
+                const currentPos = "@Html.Raw(Model.Position)";
+                onCreateDeptChange();
+                if (currentPos) {
+                    document.getElementById("createPosSelect").value = currentPos;
+                }
+            }
+        });
+    </script>
+}

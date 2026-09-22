@@ -1,4 +1,4 @@
-﻿using Lab789HRWebAPI.Core.Entities;
+using Lab789HRWebAPI.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lab789HRWebAPI.Data
@@ -7,6 +7,8 @@ namespace Lab789HRWebAPI.Data
     {
         public HRDBContext(DbContextOptions<HRDBContext> options) : base(options){ }
         public DbSet<Employee> Employees { get; set; }
+        public DbSet<DepartmentTransferRequest> DepartmentTransferRequests { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -38,6 +40,15 @@ namespace Lab789HRWebAPI.Data
                     Department = "HR",
                     Position = "Admin",
                     Salary = 1000
+                },
+                new Employee
+                {
+                    Id = 4,
+                    FullName = "Nguyen Van Nhan Vien",
+                    Email = "employee@gmail.com",
+                    Department = "IT",
+                    Position = "Junior Developer",
+                    Salary = 1200
                 }
                 );
         }

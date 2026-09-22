@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lab789AuthServer.Data
@@ -14,10 +14,18 @@ namespace Lab789AuthServer.Data
             await SeedUserAsync(userManager, "admin@gmail.com", "admin123", "Admin");
             await SeedUserAsync(userManager, "employee@gmail.com", "nhanvien123", "Employee");
             await SeedUserAsync(userManager, "sale@gmail.com", "khach123", "Sales");
+            // Seed tài khoản Manager
+            await SeedUserAsync(userManager, "manager@gmail.com", "manager123", "Manager");
+            // Seed tài khoản cho toàn bộ nhân viên có trong HRDB
+            await SeedUserAsync(userManager, "sangho@gmail.com", "nhanvien123", "Employee");
+            await SeedUserAsync(userManager, "nhunhu@gmail.com", "nhanvien123", "Employee");
+            await SeedUserAsync(userManager, "boho@gmail.com", "nhanvien123", "Employee");
+            await SeedUserAsync(userManager, "nguyenbe@gmail.com", "nhanvien123", "Employee");
+            await SeedUserAsync(userManager, "nguyenbu@gmail.com", "nhanvien123", "Employee");
         }
         private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
         {
-            string[] roles = { "Admin", "Employee", "Sales" };
+            string[] roles = { "Admin","Manager", "Employee", "Sales" };
             foreach (var role in roles)
             {
                 if(!await roleManager.RoleExistsAsync(role))

@@ -1,0 +1,156 @@
+@model Lab789HRWebClient.Models.CreateTransferRequestViewModel
+
+@{
+    ViewData["Title"] = "Submit Transfer Request";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Submit Department Transfer Request</h4>
+                <small class="text-white-50">Your request will be submitted directly to a Manager for review</small>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <!-- Current employee info summary -->
+                    <div class="card bg-light border-0 mb-4 shadow-none">
+                        <div class="card-body p-3">
+                            <h6 class="text-primary mb-3 fw-bold">
+                                👤 YOUR CURRENT PROFILE
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Full Name:</small>
+                                    <strong class="fs-6">@(string.IsNullOrEmpty(Model.CurrentFullName) ? User.Identity?.Name : Model.CurrentFullName)</strong>
+                                </div>
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block">Account Email:</small>
+                                    <code>@(string.IsNullOrEmpty(Model.CurrentEmail) ? User.Identity?.Name : Model.CurrentEmail)</code>
+                                </div>
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block mb-1">Current Department:</small>
+                                    <span class="badge bg-secondary fs-6 px-3 py-2">
+                                        🏢 @(string.IsNullOrEmpty(Model.CurrentDepartment) ? "Unspecified" : Model.CurrentDepartment)
+                                    </span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <small class="text-muted d-block mb-1">Current Position:</small>
+                                    <span class="badge bg-info text-dark fs-6 px-3 py-2">
+                                        💼 @(string.IsNullOrEmpty(Model.CurrentPosition) ? "Unspecified" : Model.CurrentPosition)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" asp-for="CurrentFullName" />
+                    <input type="hidden" asp-for="CurrentEmail" />
+                    <input type="hidden" asp-for="CurrentDepartment" />
+                    <input type="hidden" asp-for="CurrentPosition" />
+
+                    <!-- Target Department -->
+                    <div class="mb-3">
+                        <label asp-for="ToDepartment" class="form-label font-weight-bold">Target Department</label>
+                        <select asp-for="ToDepartment" class="form-select" id="departmentSelect" onchange="onDepartmentChange()">
+                            <option value="">-- Select Target Department --</option>
+                            <option value="IT">IT (Information Technology)</option>
+                            <option value="Marketing">Marketing (Media & Advertising)</option>
+                            <option value="HR">HR (Human Resources)</option>
+                            <option value="Sales">Sales (Business Development)</option>
+                            <option value="Finance">Finance (Finance & Accounting)</option>
+                            <option value="Operations">Operations (Operations & Logistics)</option>
+                        </select>
+                        <span asp-validation-for="ToDepartment" class="text-danger small"></span>
+                        <div class="form-text">
+                            Note: Destination department must differ from your current department 
+                            @if (!string.IsNullOrEmpty(Model.CurrentDepartment))
+                            {
+                                <strong>(currently: @Model.CurrentDepartment)</strong>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Target Position -->
+                    <div class="mb-3">
+                        <label asp-for="ToPosition" class="form-label font-weight-bold">Target Position in New Department</label>
+                        <select asp-for="ToPosition" class="form-select" id="positionSelect">
+                            <option value="">-- Please select department first --</option>
+                        </select>
+                        <span asp-validation-for="ToPosition" class="text-danger small"></span>
+                        <div class="form-text">
+                            Position list will automatically update based on the chosen department.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Reason" class="form-label font-weight-bold">Transfer Reason</label>
+                        <textarea asp-for="Reason" class="form-control" rows="4" placeholder="Describe your background, motivation, skills, and qualifications for the new position..."></textarea>
+                        <span asp-validation-for="Reason" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a asp-action="MyRequests" class="btn btn-outline-secondary">Back to My Requests</a>
+                        <button type="submit" class="btn btn-success px-4">Submit Request to Manager</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const positionsByDept = {
+            "IT": ["Developer", "Senior Developer", "Tester (QA/QC)", "DevOps Engineer", "System Admin", "Tech Lead", "Data Analyst"],
+            "Marketing": ["Content Creator", "Digital Marketing Specialist", "SEO Specialist", "Brand Executive", "Graphic Designer"],
+            "HR": ["HR Specialist", "Recruiter", "C&B Specialist", "HR Admin", "Training Specialist"],
+            "Sales": ["Sales Executive", "Account Manager", "Business Development", "Sales Admin", "Consultant"],
+            "Finance": ["Accountant", "Financial Analyst", "Chief Accountant", "Auditor"],
+            "Operations": ["Operations Specialist", "Project Coordinator", "Team Leader", "Operations Assistant"]
+        };
+
+        function onDepartmentChange() {
+            const deptSelect = document.getElementById("departmentSelect");
+            const posSelect = document.getElementById("positionSelect");
+            const selectedDept = deptSelect.value;
+
+            posSelect.innerHTML = "";
+
+            if (!selectedDept || !positionsByDept[selectedDept]) {
+                const opt = document.createElement("option");
+                opt.value = "";
+                opt.text = "-- Please select department first --";
+                posSelect.appendChild(opt);
+                return;
+            }
+
+            const defaultOpt = document.createElement("option");
+            defaultOpt.value = "";
+            defaultOpt.text = `-- Select position in ${selectedDept} --`;
+            posSelect.appendChild(defaultOpt);
+
+            positionsByDept[selectedDept].forEach(pos => {
+                const opt = document.createElement("option");
+                opt.value = pos;
+                opt.text = pos;
+                posSelect.appendChild(opt);
+            });
+        }
+
+        // Automatically trigger on page load if values are pre-selected
+        document.addEventListener("DOMContentLoaded", function () {
+            const deptSelect = document.getElementById("departmentSelect");
+            if (deptSelect && deptSelect.value) {
+                const currentPos = "@Html.Raw(Model.ToPosition)";
+                onDepartmentChange();
+                if (currentPos) {
+                    document.getElementById("positionSelect").value = currentPos;
+                }
+            }
+        });
+    </script>
+}

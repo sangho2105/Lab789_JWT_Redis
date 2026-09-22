@@ -1,0 +1,181 @@
+@model List<Lab789HRWebClient.Models.DepartmentTransferRequestViewModel>
+
+@{
+    ViewData["Title"] = "Review Transfer Requests";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-clipboard-check"></i> Review Transfer Requests</h2>
+            <p class="text-muted mb-0">For <strong>Manager</strong> and <strong>Admin</strong> to review and approve employee department transfers</p>
+        </div>
+        <div>
+            <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                @Model.Count request(s) pending review
+            </span>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Success!</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="card text-center p-5 shadow-sm border-0">
+            <h4 class="text-muted">No transfer requests pending review!</h4>
+            <p class="text-muted mb-0">All department transfer requests have been processed.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Request ID</th>
+                            <th>Employee</th>
+                            <th>Current Department</th>
+                            <th>Target Department</th>
+                            <th>Reason for Transfer</th>
+                            <th>Submitted At</th>
+                            <th class="text-center" style="min-width: 220px;">Review Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><strong>#@item.Id</strong></td>
+                                <td>
+                                    <strong>@item.EmployeeEmail</strong>
+                                    <br /><small class="text-muted">Employee ID: @item.EmployeeId</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary fs-6">@item.FromDepartment</span>
+                                    @if (!string.IsNullOrEmpty(item.FromPosition))
+                                    {
+                                        <div><small class="text-muted">@item.FromPosition</small></div>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary fs-6">@item.ToDepartment</span>
+                                    @if (!string.IsNullOrEmpty(item.ToPosition))
+                                    {
+                                        <div><small class="fw-bold text-success">@item.ToPosition</small></div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="p-2 bg-light rounded border text-break">
+                                        @item.Reason
+                                    </div>
+                                </td>
+                                <td>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-center">
+                                    <!-- Action Buttons -->
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal_@item.Id">
+                                            Approve
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal_@item.Id">
+                                            Reject
+                                        </button>
+                                    </div>
+
+                                    <!-- Approve Modal -->
+                                    <div class="modal fade" id="approveModal_@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog text-start">
+                                            <div class="modal-content">
+                                                <form asp-action="Review" method="post">
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <input type="hidden" name="isApproved" value="true" />
+                                                    <div class="modal-header bg-success text-white">
+                                                        <h5 class="modal-title">Approve Transfer Request #@item.Id</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Confirm transfer for employee: <strong>@item.EmployeeEmail</strong></p>
+                                                        <ul class="list-group mb-3">
+                                                            <li class="list-group-item">
+                                                                <small class="text-muted d-block">Current:</small>
+                                                                <strong>@item.FromDepartment</strong> - <em>@(string.IsNullOrEmpty(item.FromPosition) ? "No position assigned" : item.FromPosition)</em>
+                                                            </li>
+                                                            <li class="list-group-item list-group-item-success">
+                                                                <small class="text-muted d-block">Transfer to:</small>
+                                                                <strong>@item.ToDepartment</strong> - <strong class="text-success">@item.ToPosition</strong>
+                                                            </li>
+                                                        </ul>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label font-weight-bold">Designated Position in Target Department:</label>
+                                                            <input type="text" name="approvedPosition" class="form-control" value="@item.ToPosition" required />
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Review Note (Optional):</label>
+                                                            <input type="text" name="reviewNote" class="form-control" placeholder="e.g. Approved transfer to new team..." />
+                                                        </div>
+
+                                                        <div class="alert alert-info py-2 small mb-0">
+                                                            Upon approval, the system will update both Department and Position in the database and invalidate the Redis cache.
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-success">Confirm Approval</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Reject Modal -->
+                                    <div class="modal fade" id="rejectModal_@item.Id" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog text-start">
+                                            <div class="modal-content">
+                                                <form asp-action="Review" method="post">
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <input type="hidden" name="isApproved" value="false" />
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title">Reject Transfer Request #@item.Id</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Are you sure you want to REJECT the transfer request for <strong>@item.EmployeeEmail</strong>?</p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Rejection Reason (Required):</label>
+                                                            <textarea name="reviewNote" class="form-control" rows="3" required placeholder="Enter reason for declining transfer..."></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                        <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

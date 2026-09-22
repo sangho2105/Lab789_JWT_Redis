@@ -1,50 +1,89 @@
 @model List<Lab789HRWebClient.Models.Employee>
 
+@{
+    ViewData["Title"] = "Employee Directory";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+        <strong>Notification:</strong> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 @if (User.Identity?.IsAuthenticated != true)
 {
-    <div class="text-center">
-        <h1 class="display-4">Employee Manager</h1>
-        <div class="alert alert-danger">
-            <h3>You need to login!</h3>
-            @{
-                var returnUrl = "http://localhost:5133/Home/Index";
-                var loginUrl = "http://localhost:5264/Account/Login?returnUrl=" + Uri.EscapeDataString(returnUrl);
-            }
-            <a href="@loginUrl" class="btn btn-primary">Login</a>
+    <div class="text-center my-5 py-5">
+        <h1 class="display-4 font-weight-bold">Human Resources (HR) Management System</h1>
+        <p class="lead text-muted">Please login to view the employee directory and access system features.</p>
+        <div class="mt-4">
+            <a href="http://localhost:5264/Account/Login?returnUrl=@Uri.EscapeDataString("http://localhost:5133/")" class="btn btn-primary btn-lg px-4 shadow-sm">
+                Sign In Now
+            </a>
         </div>
     </div>
 }
 else
 {
-    <div class="text-center">
-        <p>Welcome, <strong>@User.Identity.Name</strong></p>
-        <h1 class="display-4">Employee List</h1>
-        @if (User.IsInRole("Admin"))
-        {
-            <p>
-                <a asp-action="Create" class="btn btn-primary">Create New</a>
-            </p>
-        }
-        <table class="table">
-            <tr>
-                <th>ID</th>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Position</th>
-                <th>Salary</th>
-            </tr>
-            @foreach (var it in Model)
-            {
-                <tr>
-                    <td>@it.Id</td>
-                    <td>@it.FullName</td>
-                    <td>@it.Email</td>
-                    <td>@it.Department</td>
-                    <td>@it.Position</td>
-                    <td>@it.Salary</td>
-                </tr>
-            }
-        </table>
+    <div class="mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h2 class="mb-0">Employee Directory</h2>
+                <small class="text-muted">Data cached and served via <strong>Redis Cache</strong></small>
+            </div>
+            <div class="d-flex gap-2">
+                @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                {
+                    <a asp-action="Create" class="btn btn-primary">
+                        + Add Employee
+                    </a>
+                }
+                <a asp-controller="TransferRequests" asp-action="Create" class="btn btn-outline-success">
+                    Submit Transfer Request
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Salary ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var it in Model)
+                            {
+                                <tr>
+                                    <td><strong>#@it.Id</strong></td>
+                                    <td>@it.FullName</td>
+                                    <td><code>@it.Email</code></td>
+                                    <td>
+                                        <span class="badge bg-info text-dark fs-6">@it.Department</span>
+                                    </td>
+                                    <td>@it.Position</td>
+                                    <td><strong>@it.Salary.ToString("N0")</strong></td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No employee records found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 }

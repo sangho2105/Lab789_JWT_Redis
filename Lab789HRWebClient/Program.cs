@@ -1,17 +1,29 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
+// Configure ShareKeys for SSO synchronization with AuthServer and SalesWebClient
 var shareKeysPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "ShareKeys"));
-Directory.CreateDirectory(shareKeysPath);
-builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(shareKeysPath)).SetApplicationName("Lab789");
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(shareKeysPath))
+    .SetApplicationName("Lab789");
 
+// Configure Session for caching JWT Token when calling HRWebAPI
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.Name = ".Lab789HR.Session";
+});
+
+// Configure Shared SSO Cookie Authentication across the system
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = "Identity.Application";
@@ -40,10 +52,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-});
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -52,7 +61,10 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
 }
+
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthentication();
 
@@ -64,6 +76,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();
