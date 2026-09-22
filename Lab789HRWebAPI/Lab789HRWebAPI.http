@@ -1,0 +1,6 @@
+@Lab789HRWebAPI_HostAddress = http://localhost:5146
+
+GET {{Lab789HRWebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

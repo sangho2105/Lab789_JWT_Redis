@@ -1,0 +1,21 @@
+<div class="text-center">
+    <h2>Authentication Server</h2>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <p>Login as: <strong>@User.Identity.Name</strong></p>
+        <p>
+            Role: <strong>
+            @string.Join(",", User.Claims.Where(
+                c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value))
+        </strong>
+    </p>
+    <form asp-controller="Account" asp-action="Logout" method="post">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-danger">Logout</button>
+    </form>
+}
+    else
+{
+    <a asp-controller="Account" asp-action="Login" class="btn btn-primary">Login</a>
+}
+</div>

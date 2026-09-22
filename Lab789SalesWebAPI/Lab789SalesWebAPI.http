@@ -1,0 +1,6 @@
+@Lab789SalesWebAPI_HostAddress = http://localhost:5185
+
+GET {{Lab789SalesWebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

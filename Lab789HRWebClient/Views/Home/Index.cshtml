@@ -1,0 +1,50 @@
+@model List<Lab789HRWebClient.Models.Employee>
+
+@if (User.Identity?.IsAuthenticated != true)
+{
+    <div class="text-center">
+        <h1 class="display-4">Employee Manager</h1>
+        <div class="alert alert-danger">
+            <h3>You need to login!</h3>
+            @{
+                var returnUrl = "http://localhost:5133/Home/Index";
+                var loginUrl = "http://localhost:5264/Account/Login?returnUrl=" + Uri.EscapeDataString(returnUrl);
+            }
+            <a href="@loginUrl" class="btn btn-primary">Login</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-center">
+        <p>Welcome, <strong>@User.Identity.Name</strong></p>
+        <h1 class="display-4">Employee List</h1>
+        @if (User.IsInRole("Admin"))
+        {
+            <p>
+                <a asp-action="Create" class="btn btn-primary">Create New</a>
+            </p>
+        }
+        <table class="table">
+            <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Position</th>
+                <th>Salary</th>
+            </tr>
+            @foreach (var it in Model)
+            {
+                <tr>
+                    <td>@it.Id</td>
+                    <td>@it.FullName</td>
+                    <td>@it.Email</td>
+                    <td>@it.Department</td>
+                    <td>@it.Position</td>
+                    <td>@it.Salary</td>
+                </tr>
+            }
+        </table>
+    </div>
+}

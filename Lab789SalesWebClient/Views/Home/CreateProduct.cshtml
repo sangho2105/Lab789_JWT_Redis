@@ -1,0 +1,33 @@
+@model Lab789SalesWebClient.Models.ProductViewModel
+
+<h2>Create Product</h2>
+
+<form asp-action="CreateProduct" method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label>Product Name</label>
+        <input asp-for="ProductName" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Category</label>
+        <input asp-for="Category" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Price</label>
+        <input asp-for="Price" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Quantity</label>
+        <input asp-for="Quantity" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Image</label>
+        <input asp-for="Image" type="file" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a asp-action="Index" class="btn btn-secondary">Back</a>
+</form>

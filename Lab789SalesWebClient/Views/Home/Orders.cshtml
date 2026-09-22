@@ -1,0 +1,31 @@
+﻿@model List<Lab789SalesWebClient.Models.Order>
+
+<div>
+    <h2>Order List</h2>
+    <p>
+        <a asp-action="CreateOrder" class="btn btn-primary">Create Order</a>
+        <a asp-action="Index" class="btn btn-secondary">Back to Products</a>
+    </p>
+
+    <table class="table">
+        <tr>
+            <th>Order ID</th>
+            <th>Product</th>
+            <th>Order Date</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Sub Total</th>
+        </tr>
+        @foreach (var it in Model)
+        {
+            <tr>
+                <td>@it.Id</td>
+                <td>@it.ProductName</td>
+                <td>@it.OrderDate.ToString("yyyy-MM-dd")</td>
+                <td>@it.Quantity</td>
+                <td>@it.Price</td>
+                <td>@it.Amount</td>
+            </tr>
+        }
+    </table>
+</div>

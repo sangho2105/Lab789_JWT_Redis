@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Lab789AuthServer/Lab789AuthServer.csproj" />
+  <Project Path="Lab789HRWebAPI/Lab789HRWebAPI.csproj" />
+  <Project Path="Lab789HRWebClient/Lab789HRWebClient.csproj" />
+  <Project Path="Lab789SalesWebAPI/Lab789SalesWebAPI.csproj" />
+  <Project Path="Lab789SalesWebClient/Lab789SalesWebClient.csproj" />
+</Solution>
